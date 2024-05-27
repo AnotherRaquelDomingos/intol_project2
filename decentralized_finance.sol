@@ -35,12 +35,23 @@ contract DecentralizedFinance is ERC20 {
     function buyDex() external payable {
         require(msg.value > 0, "The value needs to be superior to 0.");
         uint256 quantityDEX = msg.value / dexSwapRate;
-        _mint(msg.sender, quantityDEX);
-        balance += (quantityDEX * dexSwapRate);
+        // take tokens from who???
+        //send tokens to buyer
+        _mint(msg.sender, quantityDEX);  
+        //pay to contract 
+        balance += (quantityDEX * dexSwapRate); 
     }
 
     function sellDex(uint256 dexAmount) external {
-        // TODO: implement this
+        require(dexAmount <= getDexBalance(), "Not enough tokens owned.");
+        uint256 quantityETH = dexAmount * dexSwapRate;
+        require(balance >= quantityETH, "Balance of contract is too low.");
+        // send tokens to who???
+        //take tokens from seller
+        _burn(msg.sender, dexAmount);
+        //pay to seller
+        payable(msg.sender).transfer(quantityETH);
+        balance -= quantityETH;
     }
 
     function loan(uint256 dexAmount, uint256 deadline) external {
@@ -64,7 +75,7 @@ contract DecentralizedFinance is ERC20 {
     }
 
     function getDexBalance() public view returns (uint256) {
-        // TODO: implement this
+        return balanceOf(msg.sender);
     }
 
     function makeLoanRequestByNft(IERC721 nftContract, uint256 nftId, uint256 loanAmount, uint256 deadline) external {
