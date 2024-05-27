@@ -20,14 +20,15 @@ contract DecentralizedFinance is ERC20 {
     uint256 maxLoanDuration;
     uint256 dexSwapRate;
     uint256 balance;
-    Counters.Counter public tokenIdCounter;
-    mapping(uint256 => Loan) loans;
+    Counters.Counter public loanIdCounter;
+    mapping(uint256 => Loan) public loans;
 
     
     event loanCreated(address indexed borrower, uint256 amount, uint256 deadline);
 
     constructor() ERC20("DEX", "DEX") {
         owner = msg.sender;
+        maxLoanDuration = 5; 
         _mint(address(this), 10**18);
         // TODO: initialize
     }
@@ -55,9 +56,23 @@ contract DecentralizedFinance is ERC20 {
     }
 
     function loan(uint256 dexAmount, uint256 deadline) external {
-        // TODO: implement this
+        require(deadline <= maxLoanDuration, "Deadline exceeds maxLoanDuration.");
 
-       // emit loanCreated(msg.sender, loanAmount, deadline);
+        Loan memory createdLoan = Loan(deadline, dexAmount, owner, msg.sender, false, 0, 0);
+
+        uint256 loanAmount = (dexAmount * dexSwapRate) / deadline; //to confirm
+        require(balance >= loanAmount, "Balance of contract is too low.");
+        balance -= (loanAmount/2);
+        payable(msg.sender).transfer(loanAmount/2);
+
+        _burn(msg.sender, dexAmount);
+
+        loanIdCounter.increment();
+        uint256 loanId = loanIdCounter.current();
+        loans[loanId] = createdLoan;
+
+        emit loanCreated(msg.sender, loanAmount, deadline);
+        // return id of loan?
     }
 
     function returnLoan(uint256 ethAmount) external {
