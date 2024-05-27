@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract DecentralizedFinance is ERC20 {
-    // TODO: define variables
     using Counters for Counters.Counter;
     struct Loan {
         uint256 deadline;
@@ -14,14 +13,15 @@ contract DecentralizedFinance is ERC20 {
         address lender;
         address borrower;
         bool isBasedNft;
-        bool nftContract;
-        bool nftId;
+        uint256 nftContract;
+        uint256 nftId;
     }
     address owner;
     uint256 maxLoanDuration;
     uint256 dexSwapRate;
     uint256 balance;
-    mapping(Counters.Counter => Loan) loans;
+    Counters.Counter public tokenIdCounter;
+    mapping(uint256 => Loan) loans;
 
     
     event loanCreated(address indexed borrower, uint256 amount, uint256 deadline);
@@ -33,10 +33,10 @@ contract DecentralizedFinance is ERC20 {
     }
 
     function buyDex() external payable {
-        require(msg.value >= dexSwapRate, "The value is not enough to buy one DEX.");
+        require(msg.value > 0, "The value needs to be superior to 0.");
         uint256 quantityDEX = msg.value / dexSwapRate;
         _mint(msg.sender, quantityDEX);
-        balance += quantityDEX * dexSwapRate;
+        balance += (quantityDEX * dexSwapRate);
     }
 
     function sellDex(uint256 dexAmount) external {
@@ -46,7 +46,7 @@ contract DecentralizedFinance is ERC20 {
     function loan(uint256 dexAmount, uint256 deadline) external {
         // TODO: implement this
 
-        emit loanCreated(msg.sender, loanAmount, deadline);
+       // emit loanCreated(msg.sender, loanAmount, deadline);
     }
 
     function returnLoan(uint256 ethAmount) external {
@@ -78,7 +78,7 @@ contract DecentralizedFinance is ERC20 {
     function loanByNft(IERC721 nftContract, uint256 nftId) external {
         // TODO: implement this
 
-        emit loanCreated(msg.sender, loanAmount, deadline);
+        //emit loanCreated(msg.sender, loanAmount, deadline);
     }
 
     function checkLoan(uint256 loanId) external {
