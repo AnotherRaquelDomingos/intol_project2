@@ -101,8 +101,9 @@ contract DecentralizedFinance is ERC20 {
         Loan memory loanRequestCreated = Loan(deadline, loanAmount, address(0), msg.sender, true, nftContract, nftId);
 
         loanRequests[nftId] = loanRequestCreated; //or save the id of a loan
+        //take nft from account
 
-        emit loanCreated(msg.sender, loanAmount, deadline);
+        emit loanCreated(msg.sender, loanAmount, deadline); //verify
     }
 
     function cancelLoanRequestByNft(IERC721 nftContract, uint256 nftId) external {
@@ -113,9 +114,22 @@ contract DecentralizedFinance is ERC20 {
     }
 
     function loanByNft(IERC721 nftContract, uint256 nftId) external {
-        // TODO: implement this
+        require(loanRequests[nftId].nftId != nftId, "No request created for that nftId");   
+        require(loanRequests[nftId].nftContract != nftContract, "No request created for that nftContract");
 
-        //emit loanCreated(msg.sender, loanAmount, deadline);
+        Loan memory loanToEmit = loanRequests[nftId];
+        loanToEmit.lender = msg.sender;
+
+        uint256 amountDEX = loanToEmit.amount / dexSwapRate;
+        _burn(msg.sender, amountDEX); 
+
+        loanIdCounter.increment();
+        uint256 loanId = loanIdCounter.current();
+        loans[loanId] = loanToEmit;
+
+        loanRequests[nftId] = Loan(0, 0, address(0), address(0), false, IERC721(address(0)), 0); //default loan
+
+        emit loanCreated(msg.sender, loanToEmit.amount, loanToEmit.deadline);
     }
 
     function checkLoan(uint256 loanId) external {
