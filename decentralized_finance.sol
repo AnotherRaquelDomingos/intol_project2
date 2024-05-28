@@ -13,7 +13,7 @@ contract DecentralizedFinance is ERC20 {
         address lender;
         address borrower;
         bool isBasedNft;
-        uint256 nftContract;
+        IERC721 nftContract;
         uint256 nftId;
     }
     address owner;
@@ -22,13 +22,14 @@ contract DecentralizedFinance is ERC20 {
     uint256 balance;
     Counters.Counter public loanIdCounter;
     mapping(uint256 => Loan) public loans;
+    mapping(uint256 => Loan) public loanRequests;
 
     
     event loanCreated(address indexed borrower, uint256 amount, uint256 deadline);
 
     constructor() ERC20("DEX", "DEX") {
         owner = msg.sender;
-        maxLoanDuration = 5; 
+        maxLoanDuration = 5; //to establish
         _mint(address(this), 10**18);
         // TODO: initialize
     }
@@ -55,12 +56,13 @@ contract DecentralizedFinance is ERC20 {
         balance -= quantityETH;
     }
 
-    function loan(uint256 dexAmount, uint256 deadline) external {
+    function loan(uint256 dexAmount, uint256 deadline) external returns (uint256) {
         require(deadline <= maxLoanDuration, "Deadline exceeds maxLoanDuration.");
 
-        Loan memory createdLoan = Loan(deadline, dexAmount, owner, msg.sender, false, 0, 0);
-
         uint256 loanAmount = (dexAmount * dexSwapRate) / deadline; //to confirm
+
+        Loan memory createdLoan = Loan(deadline, loanAmount, owner, msg.sender, false, IERC721(address(0)), 0);
+
         require(balance >= loanAmount, "Balance of contract is too low.");
         balance -= (loanAmount/2);
         payable(msg.sender).transfer(loanAmount/2);
@@ -72,7 +74,7 @@ contract DecentralizedFinance is ERC20 {
         loans[loanId] = createdLoan;
 
         emit loanCreated(msg.sender, loanAmount, deadline);
-        // return id of loan?
+        return loanId;
     }
 
     function returnLoan(uint256 ethAmount) external {
@@ -94,7 +96,13 @@ contract DecentralizedFinance is ERC20 {
     }
 
     function makeLoanRequestByNft(IERC721 nftContract, uint256 nftId, uint256 loanAmount, uint256 deadline) external {
-        // TODO: implement this
+        require(deadline <= maxLoanDuration, "Deadline exceeds maxLoanDuration.");
+
+        Loan memory loanRequestCreated = Loan(deadline, loanAmount, address(0), msg.sender, true, nftContract, nftId);
+
+        loanRequests[nftId] = loanRequestCreated;
+
+        emit loanCreated(msg.sender, loanAmount, deadline);
     }
 
     function cancelLoanRequestByNft(IERC721 nftContract, uint256 nftId) external {
