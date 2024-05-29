@@ -28,7 +28,7 @@ contract DecentralizedFinance is ERC20 {
 
     constructor() ERC20("DEX", "DEX") {
         owner = msg.sender;
-        maxLoanDuration = 5 * 1 days; //check
+        maxLoanDuration = 5; //check
         _mint(address(this), 10**18);
         dexSwapRate = 1; //1 wei gives you 10 DEX tokens
         balance = 0;
@@ -59,26 +59,33 @@ contract DecentralizedFinance is ERC20 {
     function loan(uint256 dexAmount, uint256 deadline) external returns (uint256) {
         require(deadline <= maxLoanDuration, "Deadline exceeds the max duration for a loan.");
 
-        uint256 loanAmount = (dexAmount * dexSwapRate) / deadline; //to confirm
+        uint256 loanAmount = (dexAmount * dexSwapRate) / deadline;
+        require(balance >= loanAmount, "Balance of contract is too low.");
 
         Loan memory createdLoan = Loan(deadline, loanAmount, owner, msg.sender, false, IERC721(address(0)), 0);
-
-        require(balance >= loanAmount, "Balance of contract is too low.");
+        uint256 loanId = loanIdCounter.current();
+        loans[loanId] = createdLoan;
+        loanIdCounter.increment();
+        
         balance -= (loanAmount/2);
         payable(msg.sender).transfer(loanAmount/2);
 
-        _burn(msg.sender, dexAmount);
-
-        loanIdCounter.increment();
-        uint256 loanId = loanIdCounter.current();
-        loans[loanId] = createdLoan;
-
+        _transfer(msg.sender, address(this), dexAmount);
         emit loanCreated(msg.sender, loanAmount, deadline);
         return loanId;
     }
 
-    function returnLoan(uint256 ethAmount) external {
-        // TODO: implement this
+    function returnLoan(uint256 loanId) external payable {
+        uint256 weiToPayBack = msg.value;
+        Loan memory currentLoan = loans[loanId];
+        require(currentLoan.amount == 0, "This loan was already payed.");
+        require(weiToPayBack <= currentLoan.amount, "You can't repay more than the value of the loan");
+        uint256 newLoanAmount = currentLoan.amount - weiToPayBack; //TODO if weiToPayBack > currentLoan.amount
+        currentLoan.amount = newLoanAmount;
+        loans[loanId] = currentLoan;
+        balance += weiToPayBack;
+        uint256 quantityDEX = weiToPayBack * dexSwapRate;
+        _transfer(address(this), msg.sender, quantityDEX);
     }
 
     function getBalance() public view returns (uint256) {
@@ -91,52 +98,60 @@ contract DecentralizedFinance is ERC20 {
         dexSwapRate = rate;
     }
 
-    function getDexBalanceOfContract() public view returns (uint256) {
-        return balanceOf(address(this));
-    }
-
     function getDexBalance() public view returns (uint256) {
         return balanceOf(msg.sender);
     }
 
+    function getDexBalanceOfContract() public view returns (uint256) {
+        return balanceOf(address(this));
+    }
+
     function makeLoanRequestByNft(IERC721 nftContract, uint256 nftId, uint256 loanAmount, uint256 deadline) external {
-        require(deadline <= maxLoanDuration, "Deadline exceeds maxLoanDuration.");
+        require(deadline <= maxLoanDuration, "Deadline exceeds the max duration for a loan.");
 
         Loan memory loanRequestCreated = Loan(deadline, loanAmount, address(0), msg.sender, true, nftContract, nftId);
 
-        loanRequests[nftId] = loanRequestCreated; //or save the id of a loan
-        //take nft from account
+        loanRequests[nftId] = loanRequestCreated;
 
-        emit loanCreated(msg.sender, loanAmount, deadline); //verify
+        //emit loanCreated(msg.sender, loanAmount, deadline); //verify
     }
 
     function cancelLoanRequestByNft(IERC721 nftContract, uint256 nftId) external {
-        require(loanRequests[nftId].nftId != nftId, "No request created for that nftId");   
-        require(loanRequests[nftId].nftContract != nftContract, "No request created for that nftContract");
+        require(loanRequests[nftId].nftId != 0, "No request created for that nftId");   
+        require(loanRequests[nftId].nftContract == nftContract, "No request created for that nftContract");
 
-        loanRequests[nftId] = Loan(0, 0, address(0), address(0), false, IERC721(address(0)), 0); //default loan
+        //loanRequests[nftId] = Loan(0, 0, address(0), address(0), false, IERC721(address(0)), 0); //default loa
+        delete loanRequests[nftId];
     }
 
     function loanByNft(IERC721 nftContract, uint256 nftId) external {
-        require(loanRequests[nftId].nftId != nftId, "No request created for that nftId");   
-        require(loanRequests[nftId].nftContract != nftContract, "No request created for that nftContract");
+        require(loanRequests[nftId].nftId != 0, "No request created for that nftId");   
+        require(loanRequests[nftId].nftContract == nftContract, "No request created for that nftContract");
 
         Loan memory loanToEmit = loanRequests[nftId];
         loanToEmit.lender = msg.sender;
+        loanRequests[nftId] = loanToEmit;
 
         uint256 amountDEX = loanToEmit.amount / dexSwapRate;
-        _burn(msg.sender, amountDEX); 
+        _transfer(msg.sender, address(this), amountDEX);
 
-        loanIdCounter.increment();
+        balance -= (loanToEmit.amount);
+        payable(loanToEmit.borrower).transfer(loanToEmit.amount);
+
         uint256 loanId = loanIdCounter.current();
         loans[loanId] = loanToEmit;
+        loanIdCounter.increment();
 
-        loanRequests[nftId] = Loan(0, 0, address(0), address(0), false, IERC721(address(0)), 0); //default loan
-
-        emit loanCreated(msg.sender, loanToEmit.amount, loanToEmit.deadline);
+        //loanRequests[nftId] = Loan(0, 0, address(0), address(0), false, IERC721(address(0)), 0); //default loan
+        delete loanRequests[nftId];
+        emit loanCreated(loanToEmit.borrower, loanToEmit.amount, loanToEmit.deadline);
     }
 
     function checkLoan(uint256 loanId) external {
-        // TODO: implement this
+        require(loans[loanId].nftId != 0, "No request created for that nftId");   
+        Loan memory currentLoan = loanRequests[loanId];
+        //IF DEADLINE HAS PASSED
+        IERC721 nftContract = currentLoan.nftContract;
+        nftContract.safeTransferFrom(currentLoan.borrower, currentLoan.lender, currentLoan.nftId);
     }
 }
