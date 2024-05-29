@@ -19,45 +19,45 @@ contract DecentralizedFinance is ERC20 {
     address owner;
     uint256 maxLoanDuration;
     uint256 dexSwapRate;
-    uint256 balance;
+    uint256 balance; //In Wei
     Counters.Counter public loanIdCounter;
     mapping(uint256 => Loan) public loans;
     mapping(uint256 => Loan) public loanRequests;
-
     
     event loanCreated(address indexed borrower, uint256 amount, uint256 deadline);
 
     constructor() ERC20("DEX", "DEX") {
         owner = msg.sender;
-        maxLoanDuration = 5; //to establish
+        maxLoanDuration = 5 * 1 days; //check
         _mint(address(this), 10**18);
-        // TODO: initialize
+        dexSwapRate = 1; //1 wei gives you 10 DEX tokens
+        balance = 0;
     }
 
     function buyDex() external payable {
         require(msg.value > 0, "The value needs to be superior to 0.");
         uint256 quantityDEX = msg.value / dexSwapRate;
-        // take tokens from who???
-        //send tokens to buyer
-        _mint(msg.sender, quantityDEX);  
-        //pay to contract 
-        balance += (quantityDEX * dexSwapRate); 
+        uint256 remainder = msg.value % dexSwapRate;
+        balance += (msg.value - remainder);
+        payable(msg.sender).transfer(remainder);
+        _transfer(address(this), msg.sender, quantityDEX);
     }
 
     function sellDex(uint256 dexAmount) external {
-        require(dexAmount <= getDexBalance(), "Not enough tokens owned.");
-        uint256 quantityETH = dexAmount * dexSwapRate;
-        require(balance >= quantityETH, "Balance of contract is too low.");
-        // send tokens to who???
+        require(dexAmount <= getDexBalance(), "Not enough DEX tokens owned.");
+        uint256 quantityWei = dexAmount * dexSwapRate;
+        require(balance >= quantityWei, "Balance of contract is too low.");
+
         //take tokens from seller
-        _burn(msg.sender, dexAmount);
+        _transfer(msg.sender, address(this), dexAmount);
+
         //pay to seller
-        payable(msg.sender).transfer(quantityETH);
-        balance -= quantityETH;
+        payable(msg.sender).transfer(quantityWei);
+        balance -= quantityWei;
     }
 
     function loan(uint256 dexAmount, uint256 deadline) external returns (uint256) {
-        require(deadline <= maxLoanDuration, "Deadline exceeds maxLoanDuration.");
+        require(deadline <= maxLoanDuration, "Deadline exceeds the max duration for a loan.");
 
         uint256 loanAmount = (dexAmount * dexSwapRate) / deadline; //to confirm
 
@@ -89,6 +89,10 @@ contract DecentralizedFinance is ERC20 {
     function setDexSwapRate(uint256 rate) external {
         require(msg.sender == owner, "Only the owner of the contract can change the dex swap rate.");
         dexSwapRate = rate;
+    }
+
+    function getDexBalanceOfContract() public view returns (uint256) {
+        return balanceOf(address(this));
     }
 
     function getDexBalance() public view returns (uint256) {
