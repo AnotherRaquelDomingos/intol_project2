@@ -98,6 +98,10 @@ contract DecentralizedFinance is ERC20 {
         dexSwapRate = rate;
     }
 
+    function getDexSwapRate() public view returns (uint256) {
+        return dexSwapRate;
+    }
+
     function getDexBalance() public view returns (uint256) {
         return balanceOf(msg.sender);
     }

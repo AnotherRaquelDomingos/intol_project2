@@ -7,7 +7,18 @@
   <script src="https://cdn.jsdelivr.net/npm/web3@1.9.0/dist/web3.min.js"></script>
 </head>
 
-<body>
+<body onload="getRateEthToDex()">
+  <button onclick="connectMetaMask()">Connect MetaMask</button>
+  <br />
+  
+  <label for="dexSwapRate">DexSwapRate:</label>
+  <input type="text" id="dexSwapRate" name="dexSwapRate" placeholder="Enter dexSwapRate" />
+  <button onclick="setRateEthToDex(document.getElementById('dexSwapRate').value)">Set DexSwapRate</button>
+  <br />
+
+  <label for="getDexSwapRate">Current DexSwapRate Value:</label> 
+  <text id="getDexSwapRate"></text>
+
   <script src="main.js" type="module"></script>
 </body>
 
