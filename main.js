@@ -59,7 +59,15 @@ async function getDex() {
     // TODO: implement this
 }
 
-async function sellDex() {
+async function sellDex(dexAmount) {
+    try {
+        const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
+        await defi_contract.methods.sellDex(dexAmount).send({from: fromAddress,});
+        console.log("DEX sold successfully");
+    } catch (error) {
+        console.error("Error selling DEX:", error);
+    }
+
     // TODO: implement this
 }
 
@@ -121,7 +129,7 @@ async function getAllTokenURIs() {
 window.connectMetaMask = connectMetaMask;
 window.buyDex = buyDex;
 // window.getDex = getDex;
-// window.sellDex = sellDex;
+window.sellDex = sellDex;
 // window.loan = loan;
 // window.returnLoan = returnLoan;
 // window.getEthTotalBalance = getEthTotalBalance;
