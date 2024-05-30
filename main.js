@@ -28,7 +28,7 @@ async function connectMetaMask() {
 async function setRateEthToDex(rate) {
     try {
         const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
-        await defi_contract.methods.setDexSwapRate(rate).send({from: fromAddress,});
+        await defi_contract.methods.setDexSwapRate(rate).call({from: fromAddress,});
     } catch (error) {
         console.error("Error setting RateEthToDex:", error);
     }
@@ -59,7 +59,6 @@ async function getDex() {
     try {
         const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
         var totalDEXAmount = await defi_contract.methods.getDexBalance().call({from: fromAddress,});
-        console.log(totalDEXAmount);
         var elem = document.getElementById("totalDEX");
         elem.innerText = totalDEXAmount.toString();
     } catch (error) {
@@ -75,8 +74,6 @@ async function sellDex(dexAmount) {
     } catch (error) {
         console.error("Error selling DEX:", error);
     }
-
-    // TODO: implement this
 }
 
 async function loan() {
@@ -88,7 +85,14 @@ async function returnLoan() {
 }
 
 async function getEthTotalBalance() {
-    // TODO: implement this
+    try {
+        const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
+        const contractBalance = await defi_contract.methods.getBalance().call({from: fromAddress,});
+        var elem = document.getElementById("contractBalance");
+        elem.innerText = contractBalance;
+    } catch (error) {
+        console.error("Error getting contract total balance:", error);
+    }
 }
 
 async function getRateEthToDex() {
@@ -99,7 +103,6 @@ async function getRateEthToDex() {
     } catch (error) {
         console.error("Error getting RateEthToDex:", error);
     }
-    
 }
 
 async function getAvailableNfts() {
@@ -140,7 +143,7 @@ window.getDex = getDex;
 window.sellDex = sellDex;
 // window.loan = loan;
 // window.returnLoan = returnLoan;
-// window.getEthTotalBalance = getEthTotalBalance;
+window.getEthTotalBalance = getEthTotalBalance;
 window.setRateEthToDex = setRateEthToDex;
 window.getRateEthToDex = getRateEthToDex;
 // window.makeLoanRequestByNft = makeLoanRequestByNft;
