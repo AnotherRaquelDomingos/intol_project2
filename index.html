@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/web3@1.9.0/dist/web3.min.js"></script>
 </head>
 
-<body onload="getRateEthToDex()">
+<body>
   <button onclick="connectMetaMask()">Connect MetaMask</button>
   <br />
   <br />
@@ -16,23 +16,29 @@
   <input type="text" id="dexSwapRate" name="dexSwapRate" placeholder="Enter dexSwapRate" />
   <button onclick="setRateEthToDex(document.getElementById('dexSwapRate').value)">Set DexSwapRate</button>
   <br />
-
   <label for="getDexSwapRate">Current DexSwapRate Value:</label> 
   <text id="getDexSwapRate"></text>
   <br />
   <br />
 
+  <label for="totalDEX">Current DEX total balance:</label> 
+  <text id="totalDEX"></text>
+  <br />
   <label for="buyDEX">Wei Value:</label>
   <input type="text" id="buyDEX" name="buyDEX" placeholder="Enter Wei value" />
   <button onclick="buyDex(document.getElementById('buyDEX').value)">Buy DEX</button>
   <br />
-  <br />
-
   <label for="sellDEX">Dex Amount:</label>
   <input type="text" id="sellDEX" name="sellDEX" placeholder="Enter DEX amount" />
   <button onclick="sellDex(document.getElementById('sellDEX').value)">Sell DEX</button>
   <br />
 
+  <script> 
+    window.onload =  function(){
+      getRateEthToDex();
+      getDex();
+    }; 
+  </script>
   <script src="main.js" type="module"></script>
 </body>
 

@@ -56,7 +56,15 @@ async function buyDex(quantityWei) {
 }
 
 async function getDex() {
-    // TODO: implement this
+    try {
+        const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
+        var totalDEXAmount = await defi_contract.methods.getDexBalance().call({from: fromAddress,});
+        console.log(totalDEXAmount);
+        var elem = document.getElementById("totalDEX");
+        elem.innerText = totalDEXAmount.toString();
+    } catch (error) {
+        console.error("Error getting DEX Balance:", error);
+    }
 }
 
 async function sellDex(dexAmount) {
@@ -128,7 +136,7 @@ async function getAllTokenURIs() {
 
 window.connectMetaMask = connectMetaMask;
 window.buyDex = buyDex;
-// window.getDex = getDex;
+window.getDex = getDex;
 window.sellDex = sellDex;
 // window.loan = loan;
 // window.returnLoan = returnLoan;
