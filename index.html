@@ -10,6 +10,7 @@
 <body onload="getRateEthToDex()">
   <button onclick="connectMetaMask()">Connect MetaMask</button>
   <br />
+  <br />
   
   <label for="dexSwapRate">DexSwapRate:</label>
   <input type="text" id="dexSwapRate" name="dexSwapRate" placeholder="Enter dexSwapRate" />
@@ -18,6 +19,12 @@
 
   <label for="getDexSwapRate">Current DexSwapRate Value:</label> 
   <text id="getDexSwapRate"></text>
+  <br />
+  <br />
+
+  <label for="buyDEX">Wei Value:</label>
+  <input type="text" id="buyDEX" name="buyDEX" placeholder="Enter Wei value" />
+  <button onclick="buyDex(document.getElementById('buyDEX').value)">Buy DEX</button>
 
   <script src="main.js" type="module"></script>
 </body>

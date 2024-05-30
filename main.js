@@ -34,16 +34,25 @@ async function setRateEthToDex(rate) {
     }
 }
 
-// async function listenToLoanCreation() {
-//     // TODO: implement this
-// }
+async function listenToLoanCreation() {
+    // TODO: implement this
+}
 
 async function checkLoanStatus() {
     // TODO: implement this
 }
 
-async function buyDex() {
-    // TODO: implement this
+async function buyDex(quantityWei) {
+    try {
+        const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
+        await defi_contract.methods.buyDex().send({
+            from: fromAddress,
+            value: quantityWei,
+        });
+        console.log("DEX bought successfully");
+    } catch (error) {
+        console.error("Error buying DEX:", error);
+    }
 }
 
 async function getDex() {
@@ -101,16 +110,16 @@ async function checkLoan() {
     // TODO: implement this
 }
 
-async function listenToLoanCreation() {
-    // TODO: implement this
-}
+// async function listenToLoanCreation() {
+//     // TODO: implement this
+// }
 
 async function getAllTokenURIs() {
     // TODO: implement this
 }
 
 window.connectMetaMask = connectMetaMask;
-// window.buyDex = buyDex;
+window.buyDex = buyDex;
 // window.getDex = getDex;
 // window.sellDex = sellDex;
 // window.loan = loan;
