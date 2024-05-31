@@ -48,10 +48,23 @@
   <label for="createLoanDEX">Dex Amount:</label>
   <input type="text" id="createLoanDEX" name="createLoanDEX" placeholder="Enter DEX amount" />
   <br/>
-  <label for="createLoanDeadline">Dex Amount:</label>
+  <label for="createLoanDeadline">Deadline:</label>
   <input type="text" id="createLoanDeadline" name="createLoanDeadline" placeholder="Enter deadline" />
   <button onclick="loan(document.getElementById('createLoanDEX').value, document.getElementById('createLoanDeadline').value)">Loan</button>
+
   <br/><br/>
+
+  <label for="returnLoanID">Loan ID:</label>
+  <input type="text" id="returnLoanID" name="returnLoanID" placeholder="Enter loan ID" />
+  <br/>
+  <label for="returnLoanWeiValue">Wei Value:</label>
+  <input type="text" id="returnLoanWeiValue" name="returnLoanWeiValue" placeholder="Enter Wei value" />
+  <button onclick="returnLoan(document.getElementById('returnLoanID').value, 
+                              document.getElementById('returnLoanWeiValue').value)">Return Loan</button>
+                              
+  <br/><br/>
+
+  
 
   <script> 
     window.onload =  function(){

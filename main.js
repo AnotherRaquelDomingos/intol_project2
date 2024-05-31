@@ -86,8 +86,17 @@ async function loan(dexAmount, deadline) {
     }
 }
 
-async function returnLoan() {
-    // TODO: implement this
+async function returnLoan(loanId, quantityWei) {
+    try {
+        const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
+        await defi_contract.methods.returnLoan(loanId).send({
+            from: fromAddress,
+            value: quantityWei,
+        });
+        console.log("Loan returned successfully");
+    } catch (error) {
+        console.error("Error returning loan:", error);
+    }
 }
 
 async function getEthTotalBalance() {
@@ -148,7 +157,7 @@ window.buyDex = buyDex;
 window.getDex = getDex;
 window.sellDex = sellDex;
 window.loan = loan;
-// window.returnLoan = returnLoan;
+window.returnLoan = returnLoan;
 window.getEthTotalBalance = getEthTotalBalance;
 window.setRateEthToDex = setRateEthToDex;
 window.getRateEthToDex = getRateEthToDex;
