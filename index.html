@@ -66,9 +66,18 @@
   <label for="requestLoanNftDeadline">Deadline:</label>
   <input type="text" id="requestLoanNftDeadline" name="requestLoanNftDeadline" placeholder="Enter deadline" />
   <button onclick="makeLoanRequestByNft(document.getElementById('requestLoanNftContract').value, 
-                                        document.getElementById('requestLoanNftID').value,
-                                        document.getElementById('requestLoanNftAmount').value,
-                                        document.getElementById('requestLoanNftDeadline').value)">Request Loan by NFT</button>
+          document.getElementById('requestLoanNftID').value, document.getElementById('requestLoanNftAmount').value,
+          document.getElementById('requestLoanNftDeadline').value)">Request Loan by NFT</button>
+
+  <br/><br/>
+
+  <label for="cancelLoanNftContract">NFT Contract:</label>
+  <input type="text" id="cancelLoanNftContract" name="cancelLoanNftContract" placeholder="Enter NFT contract" />
+  <br/>
+  <label for="cancelLoanNftID">NFT ID:</label>
+  <input type="text" id="cancelLoanNftID" name="cancelLoanNftID" placeholder="Enter NFT ID" />
+  <button onclick="cancelLoanRequestByNft(document.getElementById('cancelLoanNftContract').value, 
+          document.getElementById('cancelLoanNftID').value)">Cancel Loan by NFT</button>
 
   <br/><br/>
 
