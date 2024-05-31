@@ -169,6 +169,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
     //TESTED-------------------------------------------------------------
     //-------------------------------------------------------------------
     function cancelLoanRequestByNft(IERC721 nftContract, uint256 nftId) external {
+        require(loanRequests[nftId].borrower == msg.sender, "Only the creator of the loan can cancel it."); 
         require(loanRequests[nftId].nftId != 0, "No request created for that nftId");   
         require(loanRequests[nftId].nftContract == nftContract, "No request created for that nftContract");
         delete loanRequests[nftId];
