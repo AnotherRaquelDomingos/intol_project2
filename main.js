@@ -1,14 +1,14 @@
 const web3 = new Web3(window.ethereum);
 
 // the part is related to the DecentralizedFinance smart contract
-const defi_contractAddress = "0x420E2CeC8507EfD69a71fFE4aa693debe1FA572B";
+const defi_contractAddress = "0xbC1f73c8713dad95c04CE54246217Df41365872A";
 import { defi_abi } from "./abi_decentralized_finance.js";
 const defi_contract = new web3.eth.Contract(defi_abi, defi_contractAddress);
 
 // the part is related to the the SimpleNFT smart contract
-// const nft_contractAddress = "0x01437511c0043e8a54A48058bc1ED81a83F93e97";
-// import { nft_abi } from "./abi_nft.js";
-// const nft_contract = new web3.eth.Contract(nft_abi, nft_contractAddress);
+const nft_contractAddress = "0xF9B25B38f5FDadbC98Dfbe073A218D3Ea17ef631";
+import { nft_abi } from "./abi_nft.js";
+const nft_contract = new web3.eth.Contract(nft_abi, nft_contractAddress);
 
 async function connectMetaMask() {
     if (window.ethereum) {
@@ -128,8 +128,14 @@ async function getTotalBorrowedAndNotPaidBackEth() {
     // TODO: implement this
 }
 
-async function makeLoanRequestByNft() {
-    // TODO: implement this
+async function makeLoanRequestByNft(nftContract, nftId, loanAmount, deadline) {
+    try {
+        const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
+        await defi_contract.methods.makeLoanRequestByNft(nftContract, nftId, loanAmount, deadline).send({from: fromAddress});
+        console.log("Loan requested successfully");
+    } catch (error) {
+        console.error("Error requesting loan:", error);
+    }
 }
 
 async function cancelLoanRequestByNft() {
@@ -161,7 +167,7 @@ window.returnLoan = returnLoan;
 window.getEthTotalBalance = getEthTotalBalance;
 window.setRateEthToDex = setRateEthToDex;
 window.getRateEthToDex = getRateEthToDex;
-// window.makeLoanRequestByNft = makeLoanRequestByNft;
+window.makeLoanRequestByNft = makeLoanRequestByNft;
 // window.cancelLoanRequestByNft = cancelLoanRequestByNft;
 // window.loanByNft = loanByNft;
 // window.checkLoan = checkLoan;
