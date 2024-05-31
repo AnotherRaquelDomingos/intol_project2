@@ -1,14 +1,14 @@
 const web3 = new Web3(window.ethereum);
 
 // the part is related to the DecentralizedFinance smart contract
-const defi_contractAddress = "0xbC1f73c8713dad95c04CE54246217Df41365872A";
+const defi_contractAddress = "0x24531E845679D2cD0b9f69b085e0449Be6a88E94";
 import { defi_abi } from "./abi_decentralized_finance.js";
 const defi_contract = new web3.eth.Contract(defi_abi, defi_contractAddress);
 
 // the part is related to the the SimpleNFT smart contract
-const nft_contractAddress = "0xF9B25B38f5FDadbC98Dfbe073A218D3Ea17ef631";
-import { nft_abi } from "./abi_nft.js";
-const nft_contract = new web3.eth.Contract(nft_abi, nft_contractAddress);
+// const nft_contractAddress = "0xF9B25B38f5FDadbC98Dfbe073A218D3Ea17ef631";
+// import { nft_abi } from "./abi_nft.js";
+// const nft_contract = new web3.eth.Contract(nft_abi, nft_contractAddress);
 
 async function connectMetaMask() {
     if (window.ethereum) {
@@ -35,7 +35,12 @@ async function setRateEthToDex(rate) {
 }
 
 async function listenToLoanCreation() {
-    // TODO: implement this
+    defi_contract.events.loanCreated().on('data', function(event) {
+        document.getElementById('newLoanEventNotification').style.display = 'block';
+        setTimeout(function() {  
+            document.getElementById('newLoanEventNotification').style.display = 'none'; 
+        }, 10000);
+    }).on('error', console.error);
 }
 
 async function checkLoanStatus() {
@@ -183,7 +188,7 @@ window.makeLoanRequestByNft = makeLoanRequestByNft;
 window.cancelLoanRequestByNft = cancelLoanRequestByNft;
 window.loanByNft = loanByNft;
 // window.checkLoan = checkLoan;
-// window.listenToLoanCreation = listenToLoanCreation;
+window.listenToLoanCreation = listenToLoanCreation;
 // window.getAvailableNfts = getAvailableNfts;
 // windows.getTotalBorrowedAndNotPaidBackEth = getTotalBorrowedAndNotPaidBackEth;
 // windows.checkLoanStatus = checkLoanStatus;

@@ -12,6 +12,12 @@
 
   <br/><br/>
 
+  <div id="newLoanEventNotification" style="display: none;">
+    New loan has been created.
+  </div>
+
+  <br/><br/>
+
   <button onclick="getEthTotalBalance()">Get Contract Balance:</button>
   <text id="contractBalance"></text>
 
@@ -106,6 +112,7 @@
     window.onload =  function(){
       getRateEthToDex();
       getDex();
+      listenToLoanCreation();
     }; 
   </script>
   <script src="main.js" type="module"></script>
