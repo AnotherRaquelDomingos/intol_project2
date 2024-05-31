@@ -81,6 +81,15 @@
 
   <br/><br/>
 
+  <label for="loanNftContract">NFT Contract:</label>
+  <input type="text" id="loanNftContract" name="loanNftContract" placeholder="Enter NFT contract" />
+  <br/>
+  <label for="loanNftID">NFT ID:</label>
+  <input type="text" id="loanNftID" name="loanNftID" placeholder="Enter NFT ID" />
+  <button onclick="loanByNft(document.getElementById('loanNftContract').value, document.getElementById('loanNftID').value)">Loan by NFT</button>
+
+  <br/><br/>
+
   <label for="returnLoanID">Loan ID:</label>
   <input type="text" id="returnLoanID" name="returnLoanID" placeholder="Enter loan ID" />
   <br/>

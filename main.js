@@ -148,8 +148,14 @@ async function cancelLoanRequestByNft(nftContract, nftId) {
     }
 }
 
-async function loanByNft() {
-    // TODO: implement this
+async function loanByNft(nftContract, nftId) {
+    try {
+        const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
+        await defi_contract.methods.loanByNft(nftContract, nftId).send({from: fromAddress});
+        console.log("Loan by NFT created successfully");
+    } catch (error) {
+        console.error("Error creating loan by NFT:", error);
+    }
 }
 
 async function checkLoan() {
@@ -175,7 +181,7 @@ window.setRateEthToDex = setRateEthToDex;
 window.getRateEthToDex = getRateEthToDex;
 window.makeLoanRequestByNft = makeLoanRequestByNft;
 window.cancelLoanRequestByNft = cancelLoanRequestByNft;
-// window.loanByNft = loanByNft;
+window.loanByNft = loanByNft;
 // window.checkLoan = checkLoan;
 // window.listenToLoanCreation = listenToLoanCreation;
 // window.getAvailableNfts = getAvailableNfts;
