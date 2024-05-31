@@ -43,7 +43,15 @@
   <input type="text" id="sellDEX" name="sellDEX" placeholder="Enter DEX amount" />
   <button onclick="sellDex(document.getElementById('sellDEX').value)">Sell DEX</button>
 
+  <br/><br/>
+
+  <label for="createLoanDEX">Dex Amount:</label>
+  <input type="text" id="createLoanDEX" name="createLoanDEX" placeholder="Enter DEX amount" />
   <br/>
+  <label for="createLoanDeadline">Dex Amount:</label>
+  <input type="text" id="createLoanDeadline" name="createLoanDeadline" placeholder="Enter deadline" />
+  <button onclick="loan(document.getElementById('createLoanDEX').value, document.getElementById('createLoanDeadline').value)">Loan</button>
+  <br/><br/>
 
   <script> 
     window.onload =  function(){

@@ -1,7 +1,7 @@
 const web3 = new Web3(window.ethereum);
 
 // the part is related to the DecentralizedFinance smart contract
-const defi_contractAddress = "0xA69cD4BcFaad41aB1ca6ddBb9a7436Ce8dbd64FE";
+const defi_contractAddress = "0x420E2CeC8507EfD69a71fFE4aa693debe1FA572B";
 import { defi_abi } from "./abi_decentralized_finance.js";
 const defi_contract = new web3.eth.Contract(defi_abi, defi_contractAddress);
 
@@ -76,8 +76,14 @@ async function sellDex(dexAmount) {
     }
 }
 
-async function loan() {
-    // TODO: implement this
+async function loan(dexAmount, deadline) {
+    try {
+        const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
+        await defi_contract.methods.loan(dexAmount, deadline).send({from: fromAddress,});
+        console.log("Loan created successfully");
+    } catch (error) {
+        console.error("Error creating loan:", error);
+    }
 }
 
 async function returnLoan() {
@@ -141,7 +147,7 @@ window.connectMetaMask = connectMetaMask;
 window.buyDex = buyDex;
 window.getDex = getDex;
 window.sellDex = sellDex;
-// window.loan = loan;
+window.loan = loan;
 // window.returnLoan = returnLoan;
 window.getEthTotalBalance = getEthTotalBalance;
 window.setRateEthToDex = setRateEthToDex;
