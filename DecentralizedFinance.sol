@@ -4,8 +4,9 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-contract DecentralizedFinance is ERC20 {
+contract DecentralizedFinance is ERC20, IERC721Receiver {
     using Counters for Counters.Counter;
     struct Loan {
         uint256 deadline;
@@ -32,6 +33,10 @@ contract DecentralizedFinance is ERC20 {
         _mint(address(this), 10**18);
         dexSwapRate = 1; //1 wei gives you 10 DEX tokens
         balance = 0;
+    }
+
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external override returns (bytes4) {
+       return this.onERC721Received.selector;
     }
 
     //-------------------------------------------------------------------
