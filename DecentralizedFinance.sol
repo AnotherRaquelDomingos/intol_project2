@@ -34,6 +34,9 @@ contract DecentralizedFinance is ERC20 {
         balance = 0;
     }
 
+    //-------------------------------------------------------------------
+    //TESTED-------------------------------------------------------------
+    //-------------------------------------------------------------------
     function buyDex() external payable {
         require(msg.value > 0, "The value needs to be superior to 0.");
         uint256 quantityDEX = msg.value / dexSwapRate;
@@ -41,8 +44,12 @@ contract DecentralizedFinance is ERC20 {
         balance += (msg.value - remainder);
         payable(msg.sender).transfer(remainder);
         _transfer(address(this), msg.sender, quantityDEX);
+        //adjustDexSwapRate();
     }
 
+    //-------------------------------------------------------------------
+    //TESTED-------------------------------------------------------------
+    //-------------------------------------------------------------------
     function sellDex(uint256 dexAmount) external {
         require(dexAmount <= getDexBalance(), "Not enough DEX tokens owned.");
         uint256 quantityWei = dexAmount * dexSwapRate;
@@ -54,15 +61,19 @@ contract DecentralizedFinance is ERC20 {
         //pay to seller
         payable(msg.sender).transfer(quantityWei);
         balance -= quantityWei;
+        //adjustDexSwapRate();
     }
 
+    //-------------------------------------------------------------------
+    //TESTED-------------------------------------------------------------
+    //-------------------------------------------------------------------
     function loan(uint256 dexAmount, uint256 deadline) external returns (uint256) {
         require(deadline <= maxLoanDuration, "Deadline exceeds the max duration for a loan.");
 
         uint256 loanAmount = (dexAmount * dexSwapRate) / deadline;
         require(balance >= loanAmount, "Balance of contract is too low.");
 
-        Loan memory createdLoan = Loan(deadline, loanAmount, owner, msg.sender, false, IERC721(address(0)), 0);
+        Loan memory createdLoan = Loan(deadline, loanAmount, address(this), msg.sender, false, IERC721(address(0)), 0);
         uint256 loanId = loanIdCounter.current();
         loans[loanId] = createdLoan;
         loanIdCounter.increment();
@@ -72,72 +83,99 @@ contract DecentralizedFinance is ERC20 {
 
         _transfer(msg.sender, address(this), dexAmount);
         emit loanCreated(msg.sender, loanAmount, deadline);
+        //adjustDexSwapRate();
         return loanId;
     }
 
+    //-------------------------------------------------------------------
+    //TESTED-------------------------------------------------------------
+    //-------------------------------------------------------------------
     function returnLoan(uint256 loanId) external payable {
         uint256 weiToPayBack = msg.value;
         Loan memory currentLoan = loans[loanId];
-        require(currentLoan.amount == 0, "This loan was already payed.");
-        require(weiToPayBack <= currentLoan.amount, "You can't repay more than the value of the loan");
-        uint256 newLoanAmount = currentLoan.amount - weiToPayBack; //TODO if weiToPayBack > currentLoan.amount
-        currentLoan.amount = newLoanAmount;
-        loans[loanId] = currentLoan;
-        balance += weiToPayBack;
         uint256 quantityDEX = weiToPayBack * dexSwapRate;
-        _transfer(address(this), msg.sender, quantityDEX);
+        if (currentLoan.isBasedNft) {
+            require(weiToPayBack == currentLoan.amount, "You can not make partial repayments on a loan that is NFT-Based");
+            IERC721 nftContract = currentLoan.nftContract;
+            nftContract.safeTransferFrom(address(this), currentLoan.borrower, currentLoan.nftId);
+            _transfer(address(this), currentLoan.lender, quantityDEX);
+            balance += weiToPayBack;
+            delete loans[loanId];
+        }
+        else {
+            require(currentLoan.amount > 0, "This loan was already payed.");
+            require(weiToPayBack <= currentLoan.amount, "You can't repay more than the value of the loan");
+            uint256 newLoanAmount = currentLoan.amount - weiToPayBack; 
+            currentLoan.amount = newLoanAmount;
+            loans[loanId] = currentLoan;
+            balance += weiToPayBack;
+            _transfer(address(this), msg.sender, quantityDEX);
+            if (newLoanAmount == 0) {
+                delete loans[loanId];
+            }
+        }
+        //adjustDexSwapRate();
     }
 
+    //-------------------------------------------------------------------
+    //TESTED-------------------------------------------------------------
+    //-------------------------------------------------------------------
     function getBalance() public view returns (uint256) {
         require(msg.sender == owner, "Only the owner of the contract can observe the balance.");
         return balance;
     }
 
+    //-------------------------------------------------------------------
+    //TESTED-------------------------------------------------------------
+    //-------------------------------------------------------------------
     function setDexSwapRate(uint256 rate) external {
         require(msg.sender == owner, "Only the owner of the contract can change the dex swap rate.");
         dexSwapRate = rate;
     }
 
-    function getDexSwapRate() public view returns (uint256) {
-        return dexSwapRate;
-    }
-
+    //-------------------------------------------------------------------
+    //TESTED-------------------------------------------------------------
+    //-------------------------------------------------------------------
     function getDexBalance() public view returns (uint256) {
         return balanceOf(msg.sender);
     }
 
+    //-------------------------------------------------------------------
+    //TESTED-------------------------------------------------------------
+    //-------------------------------------------------------------------
     function getDexBalanceOfContract() public view returns (uint256) {
         return balanceOf(address(this));
     }
 
+    //-------------------------------------------------------------------
+    //TESTED-------------------------------------------------------------
+    //-------------------------------------------------------------------
     function makeLoanRequestByNft(IERC721 nftContract, uint256 nftId, uint256 loanAmount, uint256 deadline) external {
         require(deadline <= maxLoanDuration, "Deadline exceeds the max duration for a loan.");
-
         Loan memory loanRequestCreated = Loan(deadline, loanAmount, address(0), msg.sender, true, nftContract, nftId);
-
         loanRequests[nftId] = loanRequestCreated;
-
-        //emit loanCreated(msg.sender, loanAmount, deadline); //verify
     }
 
+    //-------------------------------------------------------------------
+    //TESTED-------------------------------------------------------------
+    //-------------------------------------------------------------------
     function cancelLoanRequestByNft(IERC721 nftContract, uint256 nftId) external {
         require(loanRequests[nftId].nftId != 0, "No request created for that nftId");   
         require(loanRequests[nftId].nftContract == nftContract, "No request created for that nftContract");
-
-        //loanRequests[nftId] = Loan(0, 0, address(0), address(0), false, IERC721(address(0)), 0); //default loa
         delete loanRequests[nftId];
     }
 
+    
     function loanByNft(IERC721 nftContract, uint256 nftId) external {
         require(loanRequests[nftId].nftId != 0, "No request created for that nftId");   
         require(loanRequests[nftId].nftContract == nftContract, "No request created for that nftContract");
 
         Loan memory loanToEmit = loanRequests[nftId];
         loanToEmit.lender = msg.sender;
-        loanRequests[nftId] = loanToEmit;
 
         uint256 amountDEX = loanToEmit.amount / dexSwapRate;
         _transfer(msg.sender, address(this), amountDEX);
+        nftContract.safeTransferFrom(loanToEmit.borrower, address(this), nftId);
 
         balance -= (loanToEmit.amount);
         payable(loanToEmit.borrower).transfer(loanToEmit.amount);
@@ -146,16 +184,22 @@ contract DecentralizedFinance is ERC20 {
         loans[loanId] = loanToEmit;
         loanIdCounter.increment();
 
-        //loanRequests[nftId] = Loan(0, 0, address(0), address(0), false, IERC721(address(0)), 0); //default loan
         delete loanRequests[nftId];
+        //adjustDexSwapRate();
         emit loanCreated(loanToEmit.borrower, loanToEmit.amount, loanToEmit.deadline);
     }
 
     function checkLoan(uint256 loanId) external {
         require(loans[loanId].nftId != 0, "No request created for that nftId");   
         Loan memory currentLoan = loanRequests[loanId];
-        //IF DEADLINE HAS PASSED
         IERC721 nftContract = currentLoan.nftContract;
         nftContract.safeTransferFrom(currentLoan.borrower, currentLoan.lender, currentLoan.nftId);
+    }
+
+    function adjustDexSwapRate() internal {
+        uint256 contractDexBalance = getDexBalanceOfContract();
+        if (balance > 0 && contractDexBalance > 0) {
+            dexSwapRate = balance / contractDexBalance;
+        }
     }
 }
