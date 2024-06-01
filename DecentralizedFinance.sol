@@ -25,6 +25,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
     Counters.Counter public loanIdCounter;
     mapping(uint256 => Loan) public loans;
     mapping(uint256 => Loan) public loanRequests;
+    uint256 totalBorrowedAndNotPaidBackEth;
     
     event loanCreated(address indexed borrower, uint256 amount, uint256 deadline);
 
@@ -34,6 +35,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
         _mint(address(this), 10**18);
         dexSwapRate = 1; //1 wei gives you 10 DEX tokens
         balance = 0;
+        totalBorrowedAndNotPaidBackEth = 0;
     }
 
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external override returns (bytes4) {
@@ -86,6 +88,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
         
         balance -= (loanAmount/2);
         payable(msg.sender).transfer(loanAmount/2);
+        totalBorrowedAndNotPaidBackEth += loanAmount/2; 
 
         _transfer(msg.sender, address(this), dexAmount);
         emit loanCreated(msg.sender, loanAmount, deadline);
@@ -106,6 +109,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
             nftContract.safeTransferFrom(address(this), currentLoan.borrower, currentLoan.nftId);
             _transfer(address(this), currentLoan.lender, quantityDEX);
             balance += weiToPayBack;
+            totalBorrowedAndNotPaidBackEth -= weiToPayBack;
             delete loans[loanId];
         }
         else {
@@ -115,6 +119,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
             currentLoan.amount = newLoanAmount;
             loans[loanId] = currentLoan;
             balance += weiToPayBack;
+            totalBorrowedAndNotPaidBackEth -= weiToPayBack;
             _transfer(address(this), msg.sender, quantityDEX);
             if (newLoanAmount == 0) {
                 delete loans[loanId];
@@ -148,6 +153,10 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
     //-------------------------------------------------------------------
     function getDexBalance() public view returns (uint256) {
         return balanceOf(msg.sender);
+    }
+
+    function getTotalBorrowedAndNotPaidBackEth() public view returns (uint256) {
+        return totalBorrowedAndNotPaidBackEth;
     }
 
     //-------------------------------------------------------------------
@@ -190,6 +199,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
 
         balance -= (loanToEmit.amount);
         payable(loanToEmit.borrower).transfer(loanToEmit.amount);
+        totalBorrowedAndNotPaidBackEth += loanToEmit.amount;
 
         uint256 loanId = loanIdCounter.current();
         loans[loanId] = loanToEmit;
