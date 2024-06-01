@@ -16,6 +16,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
         bool isBasedNft;
         IERC721 nftContract;
         uint256 nftId;
+        uint256 createdAt;
     }
     address owner;
     uint256 maxLoanDuration;
@@ -78,7 +79,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
         uint256 loanAmount = (dexAmount * dexSwapRate) / deadline;
         require(balance >= loanAmount, "Balance of contract is too low.");
 
-        Loan memory createdLoan = Loan(deadline, loanAmount, address(this), msg.sender, false, IERC721(address(0)), 0);
+        Loan memory createdLoan = Loan(deadline, loanAmount, address(this), msg.sender, false, IERC721(address(0)), 0, block.timestamp);
         uint256 loanId = loanIdCounter.current();
         loans[loanId] = createdLoan;
         loanIdCounter.increment();
@@ -161,7 +162,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
     //-------------------------------------------------------------------
     function makeLoanRequestByNft(IERC721 nftContract, uint256 nftId, uint256 loanAmount, uint256 deadline) external {
         require(deadline <= maxLoanDuration, "Deadline exceeds the max duration for a loan.");
-        Loan memory loanRequestCreated = Loan(deadline, loanAmount, address(0), msg.sender, true, nftContract, nftId);
+        Loan memory loanRequestCreated = Loan(deadline, loanAmount, address(0), msg.sender, true, nftContract, nftId, block.timestamp);
         loanRequests[nftId] = loanRequestCreated;
     }
 
@@ -200,10 +201,14 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
     }
 
     function checkLoan(uint256 loanId) external {
-        require(loans[loanId].nftId != 0, "No request created for that nftId");   
-        Loan memory currentLoan = loanRequests[loanId];
-        IERC721 nftContract = currentLoan.nftContract;
-        nftContract.safeTransferFrom(currentLoan.borrower, currentLoan.lender, currentLoan.nftId);
+        require(loans[loanId].nftId != 0, "No loan created for that nftId");   
+        Loan memory currentLoan = loans[loanId];
+        uint256 deadlineInSeconds = currentLoan.deadline * 1 minutes;
+        if (block.timestamp > currentLoan.createdAt + deadlineInSeconds) {
+            IERC721 nftContract = currentLoan.nftContract;
+            nftContract.safeTransferFrom(address(this), currentLoan.lender, currentLoan.nftId);
+            delete loans[loanId];
+        } 
     }
 
     function adjustDexSwapRate() internal {
