@@ -1,7 +1,7 @@
 const web3 = new Web3(window.ethereum);
 
 // the part is related to the DecentralizedFinance smart contract
-const defi_contractAddress = "0x83f150A7E1CE97bfBa305e103a8233633F1ffde3";
+const defi_contractAddress = "0x4e7e3180d9cF4876cc8983e65AbF4Aa4064c890a";
 import { defi_abi } from "./abi_decentralized_finance.js";
 const defi_contract = new web3.eth.Contract(defi_abi, defi_contractAddress);
 
@@ -35,16 +35,20 @@ async function setRateEthToDex(rate) {
 }
 
 async function listenToLoanCreation() {
-    defi_contract.events.loanCreated().on('data', function(event) {
-        document.getElementById('newLoanEventNotification').style.display = 'block';
-        setTimeout(function() {  
-            document.getElementById('newLoanEventNotification').style.display = 'none'; 
-        }, 10000);
-    }).on('error', console.error);
-}
-
-async function checkLoanStatus() {
-    // TODO: implement this
+    try {
+        const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
+        const owner = await defi_contract.methods.owner().call();
+        if(owner == fromAddress) {
+            defi_contract.events.loanCreated().on('data', function(event) {
+                document.getElementById('newLoanEventNotification').style.display = 'block';
+                setTimeout(function() {  
+                    document.getElementById('newLoanEventNotification').style.display = 'none'; 
+                }, 10000);
+            }).on('error', console.error);
+        } 
+    } catch (error) {
+        console.error("Error getting owner:", error);
+    }
 }
 
 async function buyDex(quantityWei) {
@@ -211,20 +215,16 @@ async function loanByNft(nftContract, nftId) {
 async function checkLoan() {
     try {
         const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
-        await defi_contract.methods.checkAllLoans().send({from: fromAddress});
-        console.log("All loans checked successfully");
+        const owner = await defi_contract.methods.owner().call();
+        if(owner == fromAddress) {
+            await defi_contract.methods.checkAllLoans().send({from: fromAddress});
+            console.log("All loans checked successfully");
+        } 
     } catch (error) {
         console.error("Error checking loans:", error);
     }
 }
 
-// async function listenToLoanCreation() {
-//     // TODO: implement this
-// }
-
-async function getAllTokenURIs() {
-    // TODO: implement this
-}
 
 window.connectMetaMask = connectMetaMask;
 window.buyDex = buyDex;
@@ -242,5 +242,3 @@ window.checkLoan = checkLoan;
 window.listenToLoanCreation = listenToLoanCreation;
 window.getAvailableNfts = getAvailableNfts;
 window.getTotalBorrowedAndNotPaidBackEth = getTotalBorrowedAndNotPaidBackEth;
-// windows.checkLoanStatus = checkLoanStatus;
-// windows.getAllTokenURIs = getAllTokenURIs;

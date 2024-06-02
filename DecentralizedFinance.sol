@@ -18,7 +18,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
         uint256 nftId;
         uint256 createdAt;
     }
-    address owner;
+    address public owner;
     uint256 maxLoanDuration;
     uint256 dexSwapRate;
     uint256 balance; //In Wei
@@ -196,9 +196,6 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
         } 
     }
 
-    //-----------------------------------------------------------------------------
-    //-------------------MISSING TESTING IN THE INTERFACE---------------------------
-    //-----------------------------------------------------------------------------
     function checkAllLoans() external {
         for (uint i = 0; i < loanIdCounter.current(); i++) {
             Loan memory currentLoan = loans[i];
