@@ -38,7 +38,7 @@ async function listenToLoanCreation() {
     try {
         const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
         const owner = await defi_contract.methods.owner().call();
-        if(owner == fromAddress) {
+        if(owner.toLowerCase() === fromAddress.toLowerCase()) {
             defi_contract.events.loanCreated().on('data', function(event) {
                 document.getElementById('newLoanEventNotification').style.display = 'block';
                 setTimeout(function() {  
@@ -139,7 +139,7 @@ async function getAvailableNfts() {
 
             var owner = await nft_contract.methods.ownerOf(tokenId).call();
 
-            if (owner == defi_contractAddress) {
+            if (owner.toLowerCase() === defi_contractAddress.toLowerCase()) {
                 const tokenURI = await nft_contract.methods.tokenURI(tokenId).call();
                  availableNFTS.push(tokenURI);
 
@@ -216,7 +216,7 @@ async function checkLoan() {
     try {
         const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
         const owner = await defi_contract.methods.owner().call();
-        if(owner == fromAddress) {
+        if (owner.toLowerCase() === fromAddress.toLowerCase()) {
             await defi_contract.methods.checkAllLoans().send({from: fromAddress});
             console.log("All loans checked successfully");
         } 
