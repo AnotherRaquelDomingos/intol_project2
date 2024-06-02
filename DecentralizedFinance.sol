@@ -31,9 +31,9 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
 
     constructor() ERC20("DEX", "DEX") {
         owner = msg.sender;
-        maxLoanDuration = 5; //check
+        maxLoanDuration = 30;
         _mint(address(this), 10**18);
-        dexSwapRate = 1; //1 wei gives you 10 DEX tokens
+        dexSwapRate = 1;
         balance = 0;
         totalBorrowedAndNotPaidBackEth = 0;
     }
@@ -90,7 +90,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
     function returnLoan(uint256 loanId) external payable {
         uint256 weiToPayBack = msg.value;
         Loan memory currentLoan = loans[loanId];
-        uint256 quantityDEX = weiToPayBack * dexSwapRate;
+        uint256 quantityDEX = (weiToPayBack / dexSwapRate) * currentLoan.deadline;
         if (currentLoan.isBasedNft) {
             require(weiToPayBack == currentLoan.amount, "You can not make partial repayments on a loan that is NFT-Based");
             IERC721 nftContract = currentLoan.nftContract;
@@ -107,7 +107,12 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
             currentLoan.amount = newLoanAmount;
             loans[loanId] = currentLoan;
             balance += weiToPayBack;
-            totalBorrowedAndNotPaidBackEth -= weiToPayBack;
+            if (weiToPayBack > totalBorrowedAndNotPaidBackEth) {
+                totalBorrowedAndNotPaidBackEth = 0;
+            }
+            else {
+                totalBorrowedAndNotPaidBackEth -= weiToPayBack;
+            }       
             _transfer(address(this), msg.sender, quantityDEX);
             if (newLoanAmount == 0) {
                 delete loans[loanId];
@@ -145,6 +150,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
     function makeLoanRequestByNft(IERC721 nftContract, uint256 nftId, uint256 loanAmount, uint256 deadline) external {
         require(deadline <= maxLoanDuration, "Deadline exceeds the max duration for a loan.");
         Loan memory loanRequestCreated = Loan(deadline, loanAmount, address(0), msg.sender, true, nftContract, nftId, block.timestamp);
+        nftContract.safeTransferFrom(msg.sender, address(this), nftId);
         loanRequests[nftId] = loanRequestCreated;
     }
 
@@ -152,6 +158,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
         require(loanRequests[nftId].borrower == msg.sender, "Only the creator of the loan can cancel it."); 
         require(loanRequests[nftId].nftId != 0, "No request created for that nftId");   
         require(loanRequests[nftId].nftContract == nftContract, "No request created for that nftContract");
+        nftContract.safeTransferFrom(address(this), loanRequests[nftId].borrower, nftId);
         delete loanRequests[nftId];
     }
     
@@ -164,7 +171,6 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
 
         uint256 amountDEX = loanToEmit.amount / dexSwapRate;
         _transfer(msg.sender, address(this), amountDEX);
-        nftContract.safeTransferFrom(loanToEmit.borrower, address(this), nftId);
 
         balance -= (loanToEmit.amount);
         payable(loanToEmit.borrower).transfer(loanToEmit.amount);
@@ -208,12 +214,18 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
     }
 
     function adjustDexSwapRate() internal {
-        uint256 contractDexBalance = getDexBalanceOfContract();
-        if (balance > 0 && contractDexBalance > 0) {
-            dexSwapRate = balance / contractDexBalance;
+        uint256 dexBalance = getDexBalanceOfContract();
+
+        if (dexBalance == 0) {
+            dexBalance = 1;
         }
-        if (dexSwapRate <= 0) {
-            dexSwapRate = 1;
+
+        uint256 newRate = (balance / dexBalance);
+
+        if (newRate == 0) {
+            newRate = 1;
         }
+        
+        dexSwapRate = newRate;
     }
 }
