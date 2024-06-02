@@ -1,12 +1,12 @@
 const web3 = new Web3(window.ethereum);
 
 // the part is related to the DecentralizedFinance smart contract
-const defi_contractAddress = "0x8d133e2E70Dd4fC0aEC8c27ca3994e1d9BC2D920";
+const defi_contractAddress = "0x83f150A7E1CE97bfBa305e103a8233633F1ffde3";
 import { defi_abi } from "./abi_decentralized_finance.js";
 const defi_contract = new web3.eth.Contract(defi_abi, defi_contractAddress);
 
 // the part is related to the the SimpleNFT smart contract
-const nft_contractAddress = "0x15776d3BedF499d4752D8fD037B23c2070117606";
+const nft_contractAddress = "0xF959e4d433E76D08F289FC893A9b84eaac894086";
 import { nft_abi } from "./abi_nft.js";
 const nft_contract = new web3.eth.Contract(nft_abi, nft_contractAddress);
 
@@ -133,28 +133,33 @@ async function getAvailableNfts() {
     try {
         for (let tokenId = 1; tokenId <= totalTokens; tokenId++) {
 
-            const tokenURI = await nft_contract.methods.tokenURI(tokenId).call();
-            availableNFTS.push(tokenURI);
+            var owner = await nft_contract.methods.ownerOf(tokenId).call();
 
-            try {
-                const response = await fetch(tokenURI);
-                const imageBlob = await response.blob();
+            if (owner == defi_contractAddress) {
+                const tokenURI = await nft_contract.methods.tokenURI(tokenId).call();
+                 availableNFTS.push(tokenURI);
 
-                const objectURL = URL.createObjectURL(imageBlob);
-                const image = document.createElement("img");
-                image.src = objectURL;
-                image.width = 200;
-                image.height = 200;
+                try {
+                    const response = await fetch(tokenURI);
+                    const imageBlob = await response.blob();
 
-                const idElem = document.createElement("p");
-                idElem.innerHTML = `Token ID: ${tokenId}`;
-                const imageWrapper = document.createElement("div");
-                imageWrapper.appendChild(image);
-                imageWrapper.appendChild(idElem);
-                imagesDiv.appendChild(imageWrapper);
-            } catch (error) {
-                console.error(`Error fetching image for token ${tokenId}: ${error}`);
-            }
+                    const objectURL = URL.createObjectURL(imageBlob);
+                    const image = document.createElement("img");
+                    image.src = objectURL;
+                    image.width = 200;
+                    image.height = 200;
+
+                    const idElem = document.createElement("p");
+                    idElem.innerHTML = `Token ID: ${tokenId}`;
+                    const imageWrapper = document.createElement("div");
+                    imageWrapper.appendChild(image);
+                    imageWrapper.appendChild(idElem);
+                    imagesDiv.appendChild(imageWrapper);
+                } catch (error) {
+                    console.error(`Error fetching image for token ${tokenId}: ${error}`);
+                }
+            } 
+
         }
         console.log("All token URIs:", availableNFTS);
         return availableNFTS;
