@@ -1,7 +1,7 @@
 const web3 = new Web3(window.ethereum);
 
 // the part is related to the DecentralizedFinance smart contract
-const defi_contractAddress = "0x8A36c0DEC4Bb8c5F0B65E1E8d7287Fb8b8a5FC80";
+const defi_contractAddress = "0x50B3Ca5516234aFD33CfC536807e2d8c41Bbe85a";
 import { defi_abi } from "./abi_decentralized_finance.js";
 const defi_contract = new web3.eth.Contract(defi_abi, defi_contractAddress);
 
@@ -170,7 +170,13 @@ async function loanByNft(nftContract, nftId) {
 }
 
 async function checkLoan() {
-    // TODO: implement this
+    try {
+        const fromAddress = await (await window.ethereum.request({method: "eth_accounts",}))[0];
+        await defi_contract.methods.checkAllLoans().send({from: fromAddress});
+        console.log("All loans checked successfully");
+    } catch (error) {
+        console.error("Error checking loans:", error);
+    }
 }
 
 // async function listenToLoanCreation() {
@@ -193,7 +199,7 @@ window.getRateEthToDex = getRateEthToDex;
 window.makeLoanRequestByNft = makeLoanRequestByNft;
 window.cancelLoanRequestByNft = cancelLoanRequestByNft;
 window.loanByNft = loanByNft;
-// window.checkLoan = checkLoan;
+window.checkLoan = checkLoan;
 window.listenToLoanCreation = listenToLoanCreation;
 // window.getAvailableNfts = getAvailableNfts;
 window.getTotalBorrowedAndNotPaidBackEth = getTotalBorrowedAndNotPaidBackEth;

@@ -118,6 +118,7 @@
       getRateEthToDex();
       getDex();
       listenToLoanCreation();
+      setInterval(checkLoan, 2 * 60 * 1000);
     }; 
   </script>
   <script src="main.js" type="module"></script>

@@ -196,7 +196,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
     function checkAllLoans() external {
         for (uint i = 0; i < loanIdCounter.current(); i++) {
             Loan memory currentLoan = loans[i];
-            if (!(currentLoan.lender == address(0))) {
+            if (!(currentLoan.lender == address(0)) && currentLoan.isBasedNft) {
                 uint256 deadlineInSeconds = currentLoan.deadline * 1 minutes;
                 if (block.timestamp > currentLoan.createdAt + deadlineInSeconds) {
                     IERC721 nftContract = currentLoan.nftContract;
