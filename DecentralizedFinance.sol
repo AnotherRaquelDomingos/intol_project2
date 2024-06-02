@@ -49,7 +49,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
         balance += (msg.value - remainder);
         payable(msg.sender).transfer(remainder);
         _transfer(address(this), msg.sender, quantityDEX);
-        //adjustDexSwapRate();
+        adjustDexSwapRate();
     }
 
     function sellDex(uint256 dexAmount) external {
@@ -63,7 +63,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
         //pay to seller
         payable(msg.sender).transfer(quantityWei);
         balance -= quantityWei;
-        //adjustDexSwapRate();
+        adjustDexSwapRate();
     }
 
     function loan(uint256 dexAmount, uint256 deadline) external returns (uint256) {
@@ -83,7 +83,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
 
         _transfer(msg.sender, address(this), dexAmount);
         emit loanCreated(msg.sender, loanAmount, deadline);
-        //adjustDexSwapRate();
+        adjustDexSwapRate();
         return loanId;
     }
 
@@ -113,7 +113,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
                 delete loans[loanId];
             }
         }
-        //adjustDexSwapRate();
+        adjustDexSwapRate();
     }
 
     function getBalance() public view returns (uint256) {
@@ -175,7 +175,7 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
         loanIdCounter.increment();
 
         delete loanRequests[nftId];
-        //adjustDexSwapRate();
+        adjustDexSwapRate();
         emit loanCreated(loanToEmit.borrower, loanToEmit.amount, loanToEmit.deadline);
     }
 
@@ -211,6 +211,9 @@ contract DecentralizedFinance is ERC20, IERC721Receiver {
         uint256 contractDexBalance = getDexBalanceOfContract();
         if (balance > 0 && contractDexBalance > 0) {
             dexSwapRate = balance / contractDexBalance;
+        }
+        if (dexSwapRate <= 0) {
+            dexSwapRate = 1;
         }
     }
 }
