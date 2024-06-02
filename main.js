@@ -1,14 +1,14 @@
 const web3 = new Web3(window.ethereum);
 
 // the part is related to the DecentralizedFinance smart contract
-const defi_contractAddress = "0x50B3Ca5516234aFD33CfC536807e2d8c41Bbe85a";
+const defi_contractAddress = "0x8d133e2E70Dd4fC0aEC8c27ca3994e1d9BC2D920";
 import { defi_abi } from "./abi_decentralized_finance.js";
 const defi_contract = new web3.eth.Contract(defi_abi, defi_contractAddress);
 
 // the part is related to the the SimpleNFT smart contract
-// const nft_contractAddress = "0xF9B25B38f5FDadbC98Dfbe073A218D3Ea17ef631";
-// import { nft_abi } from "./abi_nft.js";
-// const nft_contract = new web3.eth.Contract(nft_abi, nft_contractAddress);
+const nft_contractAddress = "0x15776d3BedF499d4752D8fD037B23c2070117606";
+import { nft_abi } from "./abi_nft.js";
+const nft_contract = new web3.eth.Contract(nft_abi, nft_contractAddress);
 
 async function connectMetaMask() {
     if (window.ethereum) {
@@ -126,7 +126,41 @@ async function getRateEthToDex() {
 }
 
 async function getAvailableNfts() {
-    // TODO: implement this
+    const totalTokens = await nft_contract.methods.tokenIdCounter().call();
+    const availableNFTS = [];
+    const imagesDiv = document.getElementById("imagesNFTS");
+
+    try {
+        for (let tokenId = 1; tokenId <= totalTokens; tokenId++) {
+
+            const tokenURI = await nft_contract.methods.tokenURI(tokenId).call();
+            availableNFTS.push(tokenURI);
+
+            try {
+                const response = await fetch(tokenURI);
+                const imageBlob = await response.blob();
+
+                const objectURL = URL.createObjectURL(imageBlob);
+                const image = document.createElement("img");
+                image.src = objectURL;
+                image.width = 200;
+                image.height = 200;
+
+                const idElem = document.createElement("p");
+                idElem.innerHTML = `Token ID: ${tokenId}`;
+                const imageWrapper = document.createElement("div");
+                imageWrapper.appendChild(image);
+                imageWrapper.appendChild(idElem);
+                imagesDiv.appendChild(imageWrapper);
+            } catch (error) {
+                console.error(`Error fetching image for token ${tokenId}: ${error}`);
+            }
+        }
+        console.log("All token URIs:", availableNFTS);
+        return availableNFTS;
+    } catch (error) {
+        console.error("Error fetching token URIs:", error);
+    }
 }
 
 async function getTotalBorrowedAndNotPaidBackEth() {
@@ -201,7 +235,7 @@ window.cancelLoanRequestByNft = cancelLoanRequestByNft;
 window.loanByNft = loanByNft;
 window.checkLoan = checkLoan;
 window.listenToLoanCreation = listenToLoanCreation;
-// window.getAvailableNfts = getAvailableNfts;
+window.getAvailableNfts = getAvailableNfts;
 window.getTotalBorrowedAndNotPaidBackEth = getTotalBorrowedAndNotPaidBackEth;
 // windows.checkLoanStatus = checkLoanStatus;
 // windows.getAllTokenURIs = getAllTokenURIs;
